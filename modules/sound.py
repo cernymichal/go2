@@ -1,5 +1,5 @@
 import asyncio
-from os import listdir
+import os
 import discord
 
 name = "Sound"
@@ -12,14 +12,18 @@ leave: leaves the voice channel
 list: prints all available sounds
 """
 
-soundsList = [i[:-4] for i in listdir("sounds")]
+folder = "sounds"
+
+soundList = {}
+for i in os.listdir(folder):
+    soundList[os.path.splitext(i)[0]] = i
 
 
 async def Play(client, message):
     message.content = " ".join(message.content[1:])
     if message.author.voice.channel == None:
         await message.channel.send("no vc")
-    elif not message.content in soundsList:
+    elif not message.content in soundList.keys():
         await message.channel.send("sorry don't have that")
     else:
         await Stop(client, message)
@@ -28,7 +32,7 @@ async def Play(client, message):
         if vc == None:
             vc = await message.author.voice.channel.connect()
 
-        file = "sounds/{}.mp3".format(message.content)
+        file = os.path.join(folder, soundList[message.content])
 
         vc.play(discord.FFmpegPCMAudio(file))
 
@@ -41,7 +45,7 @@ async def Stop(client, message):
 
 
 async def List(client, message):
-    await message.channel.send("\n".join(soundsList))
+    await message.channel.send("\n".join(soundList.keys()))
 
 
 async def Disconnect(client, message):
@@ -55,5 +59,5 @@ functions = {
     "play": Play,
     "stop": Stop,
     "leave": Disconnect,
-    "list": List
+    "sounds": List
 }
