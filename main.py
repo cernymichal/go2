@@ -5,20 +5,17 @@ import os
 
 config = {
     "prefix": "",
-    "functionsFolder": "",
+    "modulesFolder": "",
     "token": ""
 }
-functions = []
+modules = []
+functions = {}
 
 
 def CreateConfig():
-    prefix = input("prefix: ")
-    functionsFolder = input("functionsFolder: ")
-    token = input("token: ")
-
-    config["prefix"] = prefix
-    config["functionsFolder"] = functionsFolder
-    config["token"] = token
+    config["prefix"] = input("prefix: ")
+    config["modulesFolder"] = input("modules folder: ")
+    config["token"] = input("token: ")
 
     with open("config.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(config))
@@ -30,27 +27,32 @@ def LoadConfig():
         config = json.loads(f.read())
 
 
-def SaveFunctionMetaData():
-    man = {}
-    for func in functions:
-        man[func.name] = {
-            "description": func.description,
-            "cmdsHelp": func.cmdsHelp
+def SaveModulesMetadata():
+    metadata = {}
+    for module in modules:
+        metadata[module.name] = {
+            "description": module.description
         }
 
-    with open("functions-meta.json", "w", encoding="utf-8") as f:
-        f.write(json.dumps(man))
+    with open("modules-meta.json", "w", encoding="utf-8") as f:
+        f.write(json.dumps(metadata))
 
 
-def AddFunctionsFromFolder(path):
+def AddModulesFromFolder(path):
     import sys
-    sys.path.insert(0, path)
+    sys.path.insert(1, path)
 
-    for i in os.listdir(path):
-        if os.path.isfile(os.path.join(path, i)) and i[-3:] == ".py" and i[0] != "!":
-            i = i[:-3]
-            exec("import {}".format(i))
-            exec("functions.append({})".format(i))
+    for file in os.listdir(path):
+        filePath = os.path.join(path, file)
+        if os.path.isfile(filePath) and os.path.splitext(filePath)[-1] == ".py" and file[0] != "!":
+            file = file[:-3]
+            exec("import {}".format(file))
+            exec("modules.append({})".format(file))
+
+    global functions
+
+    for module in modules:
+        functions = {**functions, **module.functions}
 
 
 client = discord.Client()
@@ -58,20 +60,15 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    for func in functions:
+    for module in modules:
         try:
-            await func.Ready(client)
+            await module.OnReady(client)
         except AttributeError:
             pass
 
-    print("name: {}".format(client.user.name))
-    print("id: {}".format(client.user.id))
-    print("avatar: {}".format(client.user.avatar_url))
     print("guilds: {}".format(
-        len(client.guilds) if len(client.guilds) > 10
-        else str([guild.name for guild in client.guilds])[1:-1]
-    ))
-    print("functions: {}".format(str([func.name for func in functions])[1:-1]))
+        ", ".join([guild.name for guild in client.guilds])))
+    print("modules: {}".format(", ".join([module.name for module in modules])))
     print("\nready!\n")
 
 
@@ -80,22 +77,22 @@ async def on_message(message):
     if message.content.lower().startswith(config["prefix"]):
         print('{} | {} >> "{}"'.format(
             message.guild.name, message.author, message.content))
-        message.content = message.content.lower(
-        )[len(config["prefix"]):].strip().split(" ")
+        message.content = message.content[len(
+            config["prefix"]):].strip().split(" ")
 
-        for func in functions:
-            if await func.Call(client, message):
-                break
+        try:
+            await functions[message.content[0]](client, message)
+        except KeyError:
+            pass
 
 
 if __name__ == '__main__':
-    print(os.path.dirname(os.path.abspath(__file__)))
     if os.path.isfile("config.json"):
         LoadConfig()
     else:
         CreateConfig()
 
-    AddFunctionsFromFolder(config["functionsFolder"])
-    SaveFunctionMetaData()
+    AddModulesFromFolder(config["modulesFolder"])
+    SaveModulesMetadata()
 
     client.run(config["token"])

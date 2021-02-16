@@ -1,3 +1,5 @@
+.vscode/
+
 images/*
 !images/jpg.jpg
 
@@ -5,7 +7,7 @@ sounds/*
 !sounds/yo.mp3
 
 config.json
-functions-meta.json
+modules-meta.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
