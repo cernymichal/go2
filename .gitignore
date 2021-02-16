@@ -7,7 +7,6 @@ sounds/*
 !sounds/yo.mp3
 
 config.json
-modules-meta.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

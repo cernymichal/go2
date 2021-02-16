@@ -27,17 +27,6 @@ def LoadConfig():
         config = json.loads(f.read())
 
 
-def SaveModulesMetadata():
-    metadata = {}
-    for module in modules:
-        metadata[module.name] = {
-            "description": module.description
-        }
-
-    with open("modules-meta.json", "w", encoding="utf-8") as f:
-        f.write(json.dumps(metadata))
-
-
 def AddModulesFromFolder(path):
     import sys
     sys.path.insert(1, path)
@@ -52,7 +41,8 @@ def AddModulesFromFolder(path):
     global functions
 
     for module in modules:
-        functions = {**functions, **module.functions}
+        if hasattr(module, "functions"):
+            functions = {**functions, **module.functions}
 
 
 client = discord.Client()
@@ -62,14 +52,12 @@ client = discord.Client()
 async def on_ready():
     for module in modules:
         try:
-            await module.OnReady(client)
+            await module.OnReady(client, modules)
         except AttributeError:
             pass
 
-    print("guilds: {}".format(
-        ", ".join([guild.name for guild in client.guilds])))
-    print("modules: {}".format(", ".join([module.name for module in modules])))
-    print("\nready!\n")
+    print("modules: {}".format(", ".join([module.name if hasattr(module, "name") else module.__name__ for module in modules])))
+    print("ready!\n")
 
 
 @client.event
@@ -93,6 +81,5 @@ if __name__ == '__main__':
         CreateConfig()
 
     AddModulesFromFolder(config["modulesFolder"])
-    SaveModulesMetadata()
 
     client.run(config["token"])

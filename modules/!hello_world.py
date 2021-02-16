@@ -8,9 +8,8 @@ hi, hello: Sends 'Hello world!'
 """
 
 
-async def OnReady(client):
+async def OnReady(client, modules):
     print("Hello world!")
-    print(client.user.name + " is now ready! <3")
 
 
 async def Hello(client, message):

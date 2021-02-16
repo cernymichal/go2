@@ -14,10 +14,13 @@ help *module*: prints help for a Module
 metadata = {}
 
 
-async def OnReady(client):
+async def OnReady(client, modules):
     global metadata
-    with open("modules-meta.json", "r", encoding="utf-8") as f:
-        metadata = json.loads(f.read())
+    for module in modules:
+        key = module.name if hasattr(module, "name") else module.__name__
+        metadata[key] = {
+            "description": module.description if hasattr(module, "description") else ""
+        }
 
 
 async def Modules(client, message):
