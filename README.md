@@ -1,3 +1,5 @@
 # go2
 
-modular discord bot
+<img src = ".images/log.png">
+
+<img src = ".images/messages.png">
