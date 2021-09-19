@@ -7,7 +7,7 @@ description = """
 Posts images from folder
 
 image *name*: posts image
-list: lists all images
+images: lists all images
 """
 
 folder = "images"
@@ -19,7 +19,7 @@ for i in os.listdir(folder):
 
 async def Image(client, message):
     message.content = " ".join(message.content[1:])
-    if not message.content in imageList.keys():
+    if message.content not in imageList.keys():
         await message.channel.send("sorry don't have that")
     else:
         await message.channel.send(
